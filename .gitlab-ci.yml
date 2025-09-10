@@ -22,7 +22,7 @@ test_api:
   stage: test
   image: python:3.11
   script:
-    - python3 test_api.py
+    - python3 -m api.test_api
   only:
     - main
 
