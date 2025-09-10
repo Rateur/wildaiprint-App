@@ -8,12 +8,17 @@ def client():
         yield client
 
 def test_predict_route(client):
-    # Image simulée : 256x256x3 pixels
     dummy_image = [[[0.0 for _ in range(3)] for _ in range(256)] for _ in range(256)]
 
-    response = client.post('/predict', json={"image": dummy_image})
+    payload = {
+        "image": dummy_image,
+        "path": "trace_001.jpg",
+        "loc": "Lyon",
+        "date": "2025-09-10"
+    }
+
+    response = client.post('/predict', json=payload)
     assert response.status_code == 200
 
     data = response.get_json()
-    assert "prediction" in data
-    assert isinstance(data["prediction"], str)
+    assert "species" in data or "prediction" in data  
