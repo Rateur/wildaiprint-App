@@ -1,0 +1,58 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - test
+  - build
+  - push
+
+# API Flask Tests
+test_api:
+  stage: test
+  image: python:3.11
+  script:
+    - pip install -r api/requirements.txt
+    - pytest api/
+  only:
+    - main
+
+# Build Flask image 
+build_api:
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA ./api
+  only:
+    - main
+
+# Push Flask image 
+push_api:
+  stage: push
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA
+  only:
+    - main
+
+# Build Frontend image 
+build_front:
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA ./front
+  only:
+    - main
+
+# Push Frontend image 
+push_front:
+  stage: push
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA
+  only:
+    - main
