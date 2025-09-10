@@ -12,7 +12,13 @@ stages:
   - test
   - build
   - push
-before_script:
+
+
+# API Flask Tests
+test_api:
+  stage: test
+  image: python:3.11
+  before_script:
   - apt update && apt install -y git git-lfs python3-pip
   - git lfs install
   - git lfs pull
@@ -20,11 +26,6 @@ before_script:
   - pip install keras==3.11.3 tensorflow>=2.13
   - python -c "import keras, tensorflow; print('Keras:', keras.__version__, 'TF:', tensorflow.__version__)"
   - pip install -r api/requirements.txt
-
-# API Flask Tests
-test_api:
-  stage: test
-  image: python:3.11
   script:
     - python3 -m api.test_api
   only:
@@ -58,12 +59,12 @@ push_api:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
+  before_script: []
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - docker push $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA
   only:
     - main
-
 
 # Build Frontend image 
 build_front:
@@ -75,13 +76,11 @@ build_front:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
-  before_script:
-    - apk update && apk add git
+  before_script: []
   script:
     - docker build -t $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA ./front
   only:
     - main
-
 
 # Push Frontend image 
 push_front:
