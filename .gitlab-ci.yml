@@ -45,9 +45,10 @@ build_api:
     - apk update && apk add git
   script:
     - docker build -t $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA ./api
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA
   only:
     - main
-
 
 # Push Flask image 
 push_api:
@@ -76,11 +77,15 @@ build_front:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
-  before_script: []
+  before_script:
+    - apk update && apk add git
   script:
     - docker build -t $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA ./front
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA
   only:
     - main
+
 
 # Push Frontend image 
 push_front:
@@ -92,9 +97,13 @@ push_front:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
+  before_script: []
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-    - docker push $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA
+    - docker pull $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA
+    - docker tag $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/front:latest
+    - docker push $CI_REGISTRY_IMAGE/front:latest
   only:
     - main
+
 
