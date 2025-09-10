@@ -16,7 +16,7 @@ def get_db_connection():
 # ---------------predictions------------------------
 
 # load CNN
-model = load_model("model.keras")  
+model = load_model("api/model.keras")  
 
 # load class names
 try:
