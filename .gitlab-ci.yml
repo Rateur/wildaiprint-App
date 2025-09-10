@@ -18,6 +18,8 @@ test_api:
   stage: test
   image: python:3.11
   script:
+    - git lfs install
+    - git lfs pull
     - pip install -r api/requirements.txt
     - python api/test_api.py
   only:
