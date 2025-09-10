@@ -16,6 +16,8 @@ before_script:
   - apt update && apt install -y git git-lfs python3 python3-pip
   - git lfs install
   - git lfs pull
+  - pip uninstall -y keras tensorflow
+  - pip install keras==3.0.5 tensorflow==2.16.1
   - pip3 install -r api/requirements.txt
 # API Flask Tests
 test_api:
