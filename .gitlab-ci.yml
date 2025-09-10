@@ -32,8 +32,8 @@ test_api:
     - main
 
 # Build Flask image 
-push_api:
-  stage: push
+build_api:
+  stage: build
   image: docker:latest
   services:
     - docker:dind
@@ -41,12 +41,12 @@ push_api:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
-  before_script: []
+  before_script:
+    - apk update && apk add git
   script:
+    - docker build -t $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA ./api
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-    - docker pull $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA
-    - docker tag $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/api:latest
-    - docker push $CI_REGISTRY_IMAGE/api:latest
+    - docker push $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA
   only:
     - main
 
