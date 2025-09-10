@@ -1,17 +1,13 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11.9-slim
+# Use the official Nginx image to serve static files
+FROM nginx:alpine
 
-# Set the working directory in the container
-WORKDIR /app
+# Remove the default Nginx HTML content
+RUN rm -rf /usr/share/nginx/html/*
 
-# Copy the current directory contents into the container
-COPY . /app
+# Copy your frontend files into Nginx's public directory
+COPY . /usr/share/nginx/html
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Expose port 80 for HTTP traffic
+EXPOSE 80
 
-# Expose the port the app runs on
-EXPOSE 8501
-
-# Define the command to run the application
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Nginx will start automatically when the container runs

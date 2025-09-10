@@ -24,8 +24,8 @@ cursor.execute("""
         path TEXT UNIQUE NOT NULL,
         loc TEXT NOT NULL,
         date DATETIME NOT NULL,
-        animal_id INTEGER NOT NULL,
-        FOREIGN KEY (animal_id) REFERENCES animals(id)
+        animal_sp TEXT NOT NULL,
+        FOREIGN KEY (animal_sp) REFERENCES animals(species)
     )
 """)
 conn.commit()
