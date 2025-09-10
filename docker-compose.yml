@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  streamlit:
+    build: ./wildaiprintfront
+    container_name: streamlit_app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./wildaiprintfront:/app
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+
+  flask:
+    build: ./wildaiprintapi
+    container_name: flask_api
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./wildaiprintapi:/app
+    environment:
+      - FLASK_APP=app.py
+    command: flask run --host=0.0.0.0
