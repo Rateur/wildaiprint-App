@@ -1,22 +1,23 @@
 version: '3.8'
 
 services:
-  streamlit:
-    build: ./wildaiprintfront
-    container_name: streamlit_app
+  front:
+    build:
+      context: ./front        # path to dockerfile folder
     ports:
-      - "8501:8501"
+      - "8080:80"             # localhost:8080 port
+    container_name: wildaiprint_front
     volumes:
-      - ./wildaiprintfront:/app
-    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+      - ./front:/usr/share/nginx/html  # Dev mode: live reload
+    restart: unless-stopped
 
   flask:
-    build: ./wildaiprintapi
+    build: ./api
     container_name: flask_api
     ports:
       - "5000:5000"
     volumes:
-      - ./wildaiprintapi:/app
+      - ./api:/app
     environment:
       - FLASK_APP=app.py
     command: flask run --host=0.0.0.0

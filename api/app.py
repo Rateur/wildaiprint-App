@@ -1,5 +1,8 @@
 from flask import Flask, jsonify, request
+from tensorflow.keras.models import load_model
+import numpy as np
 import sqlite3
+import json
 
 app = Flask(__name__)
 app.secret_key = "iqusgdoiqzgdpaohbpng$p^zoepobng,^pozpebngnôpzen,gn^bopzne,p"
@@ -10,55 +13,54 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row         
     return conn
 
-# ---------------animals------------------------
-# find animals by species
-@app.route("/animals/<species>", methods=["GET"])
-def get_animal(species):
+# ---------------predictions------------------------
+
+# load CNN
+model = load_model("model.keras")  
+
+# load class names
+try:
+    with open("class_names.json", "r") as f:
+        class_names = json.load(f)
+except Exception as e:
+    class_names = []
+    print("Erreur lors du chargement des classes :", e)
+
+# predict
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.get_json()
+    image_array = np.array(data.get("image")) 
+
+    if image_array is None:
+        return jsonify({"error": "No image data provided"}), 400
+
+    image_array = np.expand_dims(image_array, axis=0)
+    prediction = model.predict(image_array)
+    predicted_index = int(np.argmax(prediction[0]))
+    predicted_label = class_names[predicted_index]
+
+    # db connection
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM animals WHERE species = ?", (species,))
+    # find predict animals
+    cursor.execute("SELECT * FROM animals WHERE species = ?", (predicted_label,))
     row = cursor.fetchone()
     conn.close()
 
     if row is None:
         return jsonify({"error": "animal non trouvé"}), 404
+    
+    # insert track
+    cursor.execute("""
+            INSERT INTO tracks (path, loc, date, animal_id)
+            VALUES (?, ?, ?, ?)
+        """, (data["path"], data["loc"], data["date"], predicted_label))
+    conn.commit()
+    conn.close()
 
     return jsonify(dict(row))
 
-# ---------------tracks-------------------------
-# save track
-@app.route("/tracks", methods=["POST"])
-def create_track():
-    data = request.get_json()
 
-    required_fields = ["path", "loc", "date", "species"]
-    if not all(field in data for field in required_fields):
-        return jsonify({"error": "Champs manquants"}), 400
 
-    # find animal_id with species
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM animals WHERE species = ?", (data["species"],))
-    result = cursor.fetchone()
-
-    if result is None:
-        conn.close()
-        return jsonify({"error": "Espèce non trouvée"}), 404
-
-    animal_id = result["id"]
-
-    # insert track
-    try:
-        cursor.execute("""
-            INSERT INTO tracks (path, loc, date, animal_id)
-            VALUES (?, ?, ?, ?)
-        """, (data["path"], data["loc"], data["date"], animal_id))
-        conn.commit()
-        conn.close()
-        return jsonify({"message": "Trace ajoutée avec succès"}), 201
-    except sqlite3.IntegrityError as e:
-        conn.close()
-        return jsonify({"error": str(e)}), 409
-
-app.run(debug=True)

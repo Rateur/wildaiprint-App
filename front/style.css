@@ -1,0 +1,55 @@
+body {
+  background-image: url("assets/background.PNG");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+}
+
+
+.center-container {
+  background-color: rgba(0, 0, 0, 0.3); 
+  padding: 3% 10% 3% 10% ;
+  border-radius: 12px;
+  text-align: center;
+  color: white;
+  max-width: 40%;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  margin: 0 auto;
+}
+.center-container p{
+    font-size: 18px;
+}
+.center-container button {
+  background-color: #31C48D; 
+  color: white;
+  border: none;
+  padding: 2% 7% 2% 7%;
+  margin-top: 8%;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.center-container button:hover {
+  background-color: rgba(49, 196, 141, 0.6)
+}
+
+.circle-container {
+  margin: 0 auto;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.circle-container img {
+  width: 40px;
+  height: auto;
+}
