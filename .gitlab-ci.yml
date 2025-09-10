@@ -32,6 +32,9 @@ test_api:
 # Build Flask image 
 build_api:
   stage: build
+  image: debian:bullseye-slim
+  before_script:
+    - apt update && apt install -y git git-lfs python3-pip
   script:
     - docker build -t $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHORT_SHA ./api
   only:
@@ -49,6 +52,11 @@ push_api:
 # Build Frontend image 
 build_front:
   stage: build
+  image: debian:bullseye-slim
+  before_script:
+    - apt update && apt install -y git git-lfs
+    - git lfs install
+    - git lfs pull
   script:
     - docker build -t $CI_REGISTRY_IMAGE/front:$CI_COMMIT_SHORT_SHA ./front
   only:
