@@ -1,7 +1,7 @@
-import pytest
+import api.test_api as test_api
 from app import app
 
-@pytest.fixture
+@test_api.fixture
 def client():
     app.config['TESTING'] = True
     with app.test_client() as client:
