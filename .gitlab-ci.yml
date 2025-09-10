@@ -12,16 +12,17 @@ stages:
   - test
   - build
   - push
-
+before_script:
+  - apt update && apt install -y git git-lfs python3 python3-pip
+  - git lfs install
+  - git lfs pull
+  - pip3 install -r api/requirements.txt
 # API Flask Tests
 test_api:
   stage: test
   image: python:3.11
   script:
-    - git lfs install
-    - git lfs pull
-    - pip install -r api/requirements.txt
-    - python api/test_api.py
+    - python3 api/test_api.py
   only:
     - main
 
