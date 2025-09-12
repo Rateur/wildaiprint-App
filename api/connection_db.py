@@ -21,7 +21,7 @@ cursor = conn.cursor()
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS tracks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        path TEXT UNIQUE NOT NULL,
+        path TEXT NOT NULL,
         loc TEXT NOT NULL,
         date DATETIME NOT NULL,
         animal_sp TEXT NOT NULL,

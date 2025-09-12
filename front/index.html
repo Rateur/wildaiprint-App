@@ -16,12 +16,20 @@
     </header>
 
     <div class="center-container">
-        <div class="circle-container">
-            <img src="assets/camera.png" alt="Camera Icon">
+        <div class="circle-container" id="camera-btn">
+            <img src="assets/camera.png" alt="Camera Icon" onclick="openCamera()">
         </div>
+       
         <h2>Upload Photo</h2>
+        <input type="file" accept="image/*" id="uploadInput" />
+        <canvas id="canvas"></canvas>
+        <img id="photo" alt="Photo capturée" />
+        <video id="video" autoplay></video>
+        <button  id="photo-btn" onclick="takePhoto()">Take a photo</button>
         <p>Take a photo or choose from gallery to identify animal tracks</p>
-        <button>Identify Track</button>
+        <button onclick="identifyTrack()">Identify Track</button>
+        <div id="animal-info-container"></div>
+
     </div>
 
 

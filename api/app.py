@@ -3,15 +3,21 @@ from tensorflow.keras.models import load_model
 import numpy as np
 import sqlite3
 import json
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.secret_key = "iqusgdoiqzgdpaohbpng$p^zoepobng,^pozpebngnôpzen,gn^bopzne,p"
+CORS(app, resources={r"/predict": {"origins": "http://localhost:8080"}})
 
 # db connection
 def get_db_connection():
     conn = sqlite3.connect('wildprint.db')  
     conn.row_factory = sqlite3.Row         
     return conn
+# page test
+@app.route("/", methods=["GET"])
+def home():
+    return "API Flask ✅"
 
 # ---------------predictions------------------------
 
@@ -27,10 +33,12 @@ except Exception as e:
     print("Erreur lors du chargement des classes :", e)
 
 # predict
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
 def predict():
+   
+    # Traitement du POST
     data = request.get_json()
-    image_array = np.array(data.get("image")) 
+    image_array = np.array(data.get("image"))
 
     if image_array is None:
         return jsonify({"error": "No image data provided"}), 400
@@ -40,27 +48,26 @@ def predict():
     predicted_index = int(np.argmax(prediction[0]))
     predicted_label = class_names[predicted_index]
 
-    # db connection
+    # connection db
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    # find predict animals
+    # find animal
     cursor.execute("SELECT * FROM animals WHERE species = ?", (predicted_label,))
     row = cursor.fetchone()
-    conn.close()
 
     if row is None:
-        return jsonify({"error": "animal non trouvé"}), 404
-    
+        conn.close()
+        return jsonify({"error": "animal not found"}), 404
     # insert track
     cursor.execute("""
-            INSERT INTO tracks (path, loc, date, animal_id)
-            VALUES (?, ?, ?, ?)
-        """, (data["path"], data["loc"], data["date"], predicted_label))
+        INSERT INTO tracks (path, loc, date, animal_sp)
+        VALUES (?, ?, ?, ?)
+    """, (data["path"], data["loc"], data["date"], predicted_label))
     conn.commit()
     conn.close()
 
     return jsonify(dict(row))
+
 
 
 

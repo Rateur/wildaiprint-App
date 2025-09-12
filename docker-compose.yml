@@ -1,23 +1,22 @@
 version: '3.8'
 
 services:
-  front:
-    build:
-      context: ./front        # path to dockerfile folder
-    ports:
-      - "8080:80"             # localhost:8080 port
-    container_name: wildaiprint_front
-    volumes:
-      - ./front:/usr/share/nginx/html  # Dev mode: live reload
-    restart: unless-stopped
-
   flask:
-    build: ./api
+    build:
+      context: ./api
     container_name: flask_api
     ports:
       - "5000:5000"
     volumes:
-      - ./api:/app
+      - ./api:/app/api
     environment:
       - FLASK_APP=app.py
     command: flask run --host=0.0.0.0
+
+  front:
+    build:
+      context: ./front
+    container_name: wildaiprint_front
+    ports:
+      - "8080:80"
+
