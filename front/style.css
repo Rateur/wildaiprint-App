@@ -37,6 +37,13 @@ body {
   background-color: rgba(49, 196, 141, 0.6)
 }
 
+.center-container #photo-btn,
+.center-container #photo,
+#video,
+#canvas{
+    display: none;
+}
+
 .circle-container {
   margin: 0 auto;
   width: 100px;
