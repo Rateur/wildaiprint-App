@@ -1,41 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>WildAIPrint Frontend</title>
   <!-- Link to CSS -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=dev">
   <!-- Custom favicon from assets folder -->
   <link rel="icon" type="image/png" href="assets/logo_favicon.png">
 </head>
 
 <body>
-    <header>
-        <img src="assets/logo.png" alt="Logo WildAIPrint" width="200">
+    <header class="navbar" role="navigation" aria-label="Navigation principale">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Logo WildAIPrint" width="140">
+      </div>
+      <nav>
+        <ul class="nav-list" id="nav-list">
+          <span class="nav-indicator" aria-hidden="true"></span>
+          <li><a href="#accueil" id="nav-home" aria-current="page">Accueil</a></li>
+          <li><a href="#especes" id="nav-species">Espèces</a></li>
+          
+          <li><button id="open-storage-info" class="linklike" aria-label="Infos sur le stockage">Infos sur le stockage</button></li>
+        </ul>
+      </nav>
+      <button id="nav-toggle" class="burger" aria-label="Ouvrir le menu" aria-controls="nav-list" aria-expanded="false">
+        <span aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="6" width="18" height="2" rx="1"/>
+            <rect x="3" y="11" width="18" height="2" rx="1"/>
+            <rect x="3" y="16" width="18" height="2" rx="1"/>
+          </svg>
+        </span>
+      </button>
     </header>
 
-    <div class="center-container">
-        <div class="circle-container" id="camera-btn">
-            <img src="assets/camera.png" alt="Camera Icon" onclick="openCamera()">
-        </div>
-       
-        <h2>Upload Photo</h2>
-        <input type="file" accept="image/*" id="uploadInput" />
-        <canvas id="canvas"></canvas>
+    <main>
+    <section id="home-section">
+    <div class="center-container" aria-live="polite">
+        <button class="circle-container" id="camera-btn" aria-label="Ouvrir la caméra pour prendre une photo">
+            <img src="assets/camera.png" alt="Icône appareil photo">
+        </button>
+        
+        <h2>Importer une photo</h2>
+        <label for="uploadInput" class="sr-only">Choisir une photo depuis votre appareil</label>
+        <input type="file" accept="image/*" id="uploadInput" aria-label="Choisir une photo" class="sr-only" />
+        <button id="file-picker-btn" class="btn-primary file-picker" aria-controls="uploadInput">
+          <span class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2l1-2h8l1 2h2a2 2 0 0 1 2 2v11zM5 8v11h14V8H5zm7 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 .001-4.001A2 2 0 0 0 12 15z"/>
+            </svg>
+          </span>
+          Choisir un fichier
+        </button>
+        <div id="file-status" class="status-text" role="status" aria-live="polite">Aucune image sélectionnée</div>
         <img id="photo" alt="Photo capturée" />
-        <video id="video" autoplay></video>
-        <button  id="photo-btn" onclick="takePhoto()">Take a photo</button>
-        <p>Take a photo or choose from gallery to identify animal tracks</p>
-        <button onclick="identifyTrack()">Identify Track</button>
+        <div class="file-actions">
+          <button type="button" id="clear-image" class="btn-secondary" aria-label="Supprimer l'image sélectionnée" hidden>Supprimer l'image</button>
+        </div>
+        <p>Prendre une photo ou choisir depuis la galerie pour identifier des traces animales.</p>
+        <button onclick="identifyTrack()">Identifier l'empreinte</button>
         <div id="animal-info-container"></div>
-
+    
     </div>
+    </section>
+
+    <section id="species-section" hidden aria-labelledby="species-title">
+      <div class="center-container">
+        <h2 id="species-title">Espèces</h2>
+        <label for="species-search" class="sr-only">Rechercher une espèce</label>
+        <input id="species-search" type="search" placeholder="Rechercher une espèce" aria-label="Rechercher une espèce" />
+        <div id="species-grid" class="species-grid" role="list"></div>
+      </div>
+    </section>
+    
+    
+    </main>
+
+    <!-- Modale: Informations sur l'espèce -->
+    <div id="species-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="species-title-over" aria-describedby="species-modal-desc" hidden>
+      <div class="modal-backdrop" data-close="true"></div>
+      <div class="modal-dialog" role="document">
+        <button type="button" class="modal-close" aria-label="Fermer la fenêtre">×</button>
+        <div class="modal-content species">
+          <div class="species-media">
+            <h2 id="species-title-over" class="species-title-over"></h2>
+            <img id="species-image" alt="" />
+          </div>
+          <div class="species-details">
+            <p id="species-sci" class="sci-name"></p>
+            <p id="species-modal-desc"></p>
+            <ul class="spec-list">
+              <li><strong>Famille:</strong> <span id="species-family"></span></li>
+              <li><strong>Taille:</strong> <span id="species-size"></span></li>
+              <li><strong>Région:</strong> <span id="species-region"></span></li>
+              <li><strong>Habitat:</strong> <span id="species-housing"></span></li>
+            </ul>
+            <p id="species-funfact" class="funfact"></p>
+          </div>
+    </div>
+    </div>
+    </div>
+
+    <!-- Animation "match" lors de la prédiction -->
+    <div id="match-overlay" class="match-overlay" role="status" aria-live="polite" hidden>
+      <div class="match-inner">
+        <div class="match-ring" aria-hidden="true"></div>
+        <img id="match-image" alt="" />
+        <div id="match-text" class="match-text"></div>
+      </div>
+    </div>
+
+    <!-- Modale: Caméra pour prendre une photo -->
+    <div id="camera-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="camera-modal-title" aria-describedby="camera-modal-desc" hidden>
+      <div class="modal-backdrop" data-close="true"></div>
+      <div class="modal-dialog" role="document">
+        <button type="button" class="modal-close" aria-label="Fermer la fenêtre">×</button>
+        <div class="modal-content">
+          <h2 id="camera-modal-title">Prendre une photo</h2>
+          <p id="camera-modal-desc" class="sr-only">Activez la caméra, cadrez l’empreinte et utilisez l’obturateur pour capturer.</p>
+          <div class="camera-area">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+          </div>
+          <div class="camera-controls" id="camera-controls">
+            <button type="button" id="camera-switch" class="btn-secondary" aria-label="Inverser la caméra">Inverser caméra</button>
+            <button type="button" id="photo-btn" onclick="takePhoto()" class="shutter" aria-label="Prendre une photo"></button>
+            <div class="camera-validate">
+              <button type="button" id="camera-retake" class="btn-secondary">Reprendre</button>
+              <button type="button" id="camera-accept" class="btn-primary">Valider</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modale: Informations de stockage des images -->
+    <div id="storage-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="storage-modal-title" aria-describedby="storage-modal-desc" hidden>
+      <div class="modal-backdrop" data-close="true"></div>
+      <div class="modal-dialog" role="document">
+        <button type="button" class="modal-close" aria-label="Fermer la fenêtre">×</button>
+        <div class="modal-content">
+          <h2 id="storage-modal-title">Stockage des images et données</h2>
+          <p id="storage-modal-desc">
+            Dans le cadre de l’identification des empreintes, nous stockons temporairement l’image que vous envoyez, le résultat de prédiction de notre modèle, ainsi que l’heure et le lieu de capture. Ces données sont utilisées exclusivement pour améliorer la précision de notre modèle et pour des fins statistiques internes.
+          </p>
+          <p>
+            En cochant la case et en cliquant sur « J’accepte », vous reconnaissez avoir lu et compris ces informations et vous acceptez nos conditions d’utilisation. Vous pouvez consulter ou rouvrir ces informations à tout moment via le lien « Infos sur le stockage » en bas de page.
+          </p>
+          <label class="consent-row"><input type="checkbox" id="storage-checkbox"> <span>J’ai lu et j’accepte les informations ci-dessus</span></label>
+          <div class="modal-actions">
+            <button type="button" id="storage-reset" class="btn-primary" aria-label="Réinitialiser mon consentement">Réinitialiser mon consentement</button>
+            <button type="button" id="storage-accept" class="btn-primary" disabled>J’accepte</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive" hidden></div>
 
 
 
 
     <!-- Link to JS -->
-    <script src="script.js"></script>
+    <script src="script.js?v=dev"></script>
 </body>
 </html>
