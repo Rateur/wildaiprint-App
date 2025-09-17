@@ -110,10 +110,11 @@ Ouvrir `http://localhost:8080/` dans un navigateur ou servir avec un petit serve
 
 **Requête :**
 
-Méthode: POST 
-Endpoint: http://localhost:5000/predict
-Content-Type: application/json
-Body > raw > Json:
+- Méthode: POST 
+- Endpoint: http://localhost:5000/predict
+- Content-Type: application/json
+- Body > raw > Json :
+
 ```json
 {
   "image": [[0, 1, 2], [3, 4, 5], [6, 7, 8]],
@@ -123,7 +124,7 @@ Body > raw > Json:
 }
 
 ```
-```
+
 
 **Réponse :**
 ```json
