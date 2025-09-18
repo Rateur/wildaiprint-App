@@ -76,7 +76,7 @@ def predict():
         conn.commit()
         conn.close()
 
-        return jsonify({"animals":dict(row)})
+        return jsonify({"animal":dict(row)})
     
 
 # ---------------tracks------------------------

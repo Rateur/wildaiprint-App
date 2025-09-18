@@ -125,15 +125,18 @@ Ouvrir `http://localhost:8080/` dans un navigateur.
 **Réponse :**
 ```json
 {
-	"description": "Le Chat(Felis silvestris) est une espèce de félins présent dans divers types d'habitats."
-	"family": "Mammifère"
-	"funfact": "Un chat ne peut pas voir directement sous son nez !"
-	"housing": null
-	"name": "Felis silvestris"
-	"picture": "chat.jpg"
-	"region": "Amérique, Europe, Asie occidentale et Afrique"
-	"size": "46 à 51 cm sans la queue"
-	"species": "Chat"
+	"animal":
+	{
+		"description": "Le Chat(Felis silvestris) est une espèce de félins présent dans divers types d'habitats."
+		"family": "Mammifère"
+		"funfact": "Un chat ne peut pas voir directement sous son nez !"
+		"housing": null
+		"name": "Felis silvestris"
+		"picture": "chat.jpg"
+		"region": "Amérique, Europe, Asie occidentale et Afrique"
+		"size": "46 à 51 cm sans la queue"
+		"species": "Chat"
+	}
 }
 ```
 </details>
