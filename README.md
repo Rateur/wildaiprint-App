@@ -58,7 +58,7 @@ Consulter la documentation complète du projet ici :
 
 <details><summary>Contenu détaillé du dossier api</summary>
 
-- `app.py` : point d’entrée de l’API Flask, définition des routes `/predict`, `/trace`, `/species/<id>`.
+- `app.py` : point d’entrée de l’API Flask, définition des routes `/predict`, `/tracks`, `/animals/<id>`.
 - `connection_db.py` : gestion des accès à la base SQLite `wildprint.db`.
 - `class_names.json` : correspondance id → nom d’espèce.
 - `infos_especes.csv` : métadonnées sur les espèces.
@@ -96,35 +96,31 @@ docker-compose build
 docker-compose up
 ```
 * #### API : 
-Ouvrir `http://localhost:5000` dans un navigateur ou servir avec un petit serveur local.
+Ouvrir `http://localhost:5000` dans un navigateur.
 
 * #### Front : 
-Ouvrir `http://localhost:8080/` dans un navigateur ou servir avec un petit serveur local.
+Ouvrir `http://localhost:8080/` dans un navigateur.
 
 ## API endpoints
-| Méthode | Endpoint                             | 
-| ------- | ------------------------------------ |
-| POST    | `http://localhost:5000/predict`      | 
-
-<details><summary>Exemple de requête / réponse</summary>
+| Méthode | Endpoint                             | Content-Type        | Body
+| ------- | ------------------------------------ | ------------------- | ------------------------------------------------------------------------  
+| POST    | `http://localhost:5000/predict`      | multipart/form-data | FormData contenant un champ "image" avec le fichier image (JPEG, PNG, jpg)
+| POST    | `http://localhost:5000/tracks`       | application/json    | Un objet JSON contenant les informations de la trace (loc, date, species) 
+| GET     | `http://localhost:5000/tracks`       | application/json    | Aucun corps. Retourne la liste des traces enregistrées dans la BDD
+| GET     | `http://localhost:5000/animals`      | application/json    | Aucun corps. Retourne tous les espèces animales enregistrés dans la BDD
+  
+<details><summary>Exemple de requête/réponse de prediction </summary>
 
 **Requête :**
 
 - Méthode: POST 
 - Endpoint: http://localhost:5000/predict
-- Content-Type: application/json
-- Body > raw > Json :
-
-```json
-{
-  "image": [[0, 1, 2], [3, 4, 5], [6, 7, 8]],
-  "path": "/uploads/img123.jpg",
-  "loc": "Paris, France",
-  "date": "2025-09-17"
-}
-
-```
-
+- Content-Type: multipart/form-data 
+- Body: Sélectionne form-data
+  Ajoute une ligne avec :
+  Key : image
+  Type : File
+  Value : sélectionne une image locale (exemple: track.jpg)
 
 **Réponse :**
 ```json
