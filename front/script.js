@@ -223,41 +223,20 @@ async function identifyTrack() {
     }
     console.time('total');
     console.time('prep');
-    const resizedCanvas = document.createElement('canvas');
-    resizedCanvas.width = 256;
-    resizedCanvas.height = 256;
-    const resizedCtx = resizedCanvas.getContext('2d');
-    resizedCtx.drawImage(canvas, 0, 0, 256, 256);
-    const imageData = resizedCtx.getImageData(0, 0, 256, 256).data;
-    const reshaped = [];
-    for (let y = 0; y < 256; y++) {
-      const row = [];
-      for (let x = 0; x < 256; x++) {
-        const i = (y * 256 + x) * 4;
-        row.push([imageData[i], imageData[i + 1], imageData[i + 2]]); // R, G, B
-      }
-      reshaped.push(row);
-    }
-    console.timeEnd('prep');
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+
+    const data = new FormData();
+    data.append("image", blob, "track.jpg");
 
     // Fast geolocation with timeout to avoid blocking too long
     console.time('geolocate');
     const loc = await fetchLocationFast(600);
     console.timeEnd('geolocate');
 
-    const payload = {
-      image: reshaped,
-      path: `track_${Date.now()}_${Math.floor(Math.random() * 10000)}.png`,
-      loc,
-      date: new Date().toISOString()
-    };
-
-
     console.time('predict');
     const response = await fetch("http://localhost:5000/predict", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: data
     });
     // response received
 
@@ -273,12 +252,22 @@ async function identifyTrack() {
     if (contentType && contentType.includes("application/json")) {
       const result = await response.json();
       console.log("API response:", result);
+      const trackPayload = {
+        loc,
+        date: new Date().toISOString(),
+        species: result.animals.species
+      };
+      await fetch("http://localhost:5000/tracks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(trackPayload)
+      });
 
       // Small "match"-style animation before showing modal
-      await showMatchAnimation(result);
+      await showMatchAnimation(result.animals);
 
       // Fill species modal
-      fillSpeciesModal(result);
+      fillSpeciesModal(result.animals);
       openModal(document.getElementById('species-modal'));
     } else {
       const text = await response.text();
@@ -649,7 +638,10 @@ let speciesDataCache = null;
 async function ensureSpeciesLoaded() {
   if (speciesDataCache) return renderSpecies(speciesDataCache);
   try {
-    const res = await fetch('assets/species.json', { headers: { 'Accept': 'application/json' } });
+    const res = await fetch('http://localhost:5000/animals', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
     const data = await res.json();
     speciesDataCache = Array.isArray(data) ? data : [];
     renderSpecies(speciesDataCache);
