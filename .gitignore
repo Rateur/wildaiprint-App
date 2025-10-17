@@ -1,0 +1,37 @@
+### Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+### Environments
+.venv/
+venv/
+env/
+.python-version
+
+### Logs & coverage
+*.log
+*.sqlite3
+*.db
+.coverage
+coverage.xml
+
+### Model artifacts
+*.keras
+*.h5
+*.tflite
+class_names.json
+mlruns/
+
+### Front build output
+node_modules/
+dist/
+build/
+
+### OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
