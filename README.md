@@ -12,7 +12,7 @@
 
 <p align="center">
   Application WildAIprint complète (front web + API Flask) connectée au modèle de classification d’empreintes animales.<br>
-  Soumission d’images, inférence en temps réel, stockage des traces et restitution des informations espèces.
+  Soumission d’images, prédiction en local, stockage des traces et restitution des informations espèces.
 </p>
 
 > La documentation du projet est répartie sur deux README complémentaires :
@@ -37,7 +37,7 @@
 ## <a id="a-propos"></a>À propos
 
 ### <a id="pitch"></a>Pitch & objectifs
-- Interface web permettant d’uploader une photo d’empreinte et d’obtenir une prédiction instantanée.
+- Interface web permettant d’uploader une photo d’empreinte et d’obtenir une prédiction.
 - Back-end Flask intégrant le modèle Keras pré-entraîné (ResNet50 fine-tuné).
 - Persistance des observations (espèce, localisation, date, image) dans une base SQLite.
 - API REST exposant les routes principales : `predict`, `tracks`, `animals`.
