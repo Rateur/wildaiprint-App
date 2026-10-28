@@ -255,7 +255,7 @@ async function identifyTrack() {
       const trackPayload = {
         loc,
         date: new Date().toISOString(),
-        species: result.animals.species
+        species: result.animal.species
       };
       await fetch("http://localhost:5000/tracks", {
         method: "POST",
@@ -264,10 +264,10 @@ async function identifyTrack() {
       });
 
       // Small "match"-style animation before showing modal
-      await showMatchAnimation(result.animals);
+      await showMatchAnimation(result.animal);
 
       // Fill species modal
-      fillSpeciesModal(result.animals);
+      fillSpeciesModal(result.animal);
       openModal(document.getElementById('species-modal'));
     } else {
       const text = await response.text();
