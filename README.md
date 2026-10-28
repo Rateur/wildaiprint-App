@@ -11,13 +11,15 @@
 </p>
 
 <p align="center">
-  Application WildAIprint complète (front web + API Flask) connectée au modèle de classification d’empreintes animales.<br>
-  Soumission d’images, prédiction en local, stockage des traces et restitution des informations espèces.
+  Application WildAIprint : un front web et une API Flask branchés sur un classifieur d'empreintes animales.<br>
+  Envoi d'une photo, prédiction parmi 13 espèces, fiche de l'espèce, enregistrement du relevé.
 </p>
 
-> La documentation du projet est répartie sur deux README complémentaires :
-> - **Ce dépôt – WildAIprint App** : application front/back (interface + API Flask).
-> - **WildAIprint – Modèle IA** : entraînement et export du modèle (`model.keras`) – [github.com/Rateur/WildAIprint-Modele-CNN](https://github.com/Rateur/WildAIprint-Modele-CNN).
+> **Démo de chaîne complète, pas un outil fiable sur le terrain.** Le modèle trouve la bonne espèce dans 26 % des cas, mesuré sur 38 photos de test jamais vues (voir [Le modèle](#modele)).
+>
+> La documentation est répartie sur deux dépôts :
+> - **Ce dépôt, WildAIprint App** : interface et API Flask.
+> - **WildAIprint, Modèle IA** : entraînement, évaluation et export de `model.keras`. [github.com/Rateur/WildAIprint-Modele-CNN](https://github.com/Rateur/WildAIprint-Modele-CNN)
 
 ---
 
@@ -27,26 +29,27 @@
    1.2. [Documentation projet](#documentation)  
 2. [Technologies & outils](#technologies)  
 3. [Architecture & modules](#architecture)  
-4. [Installation & lancement](#installation)  
-5. [API & intégration](#api)  
-6. [Structure du dépôt](#structure)  
-7. [CI/CD & qualité](#qualite)
+4. [Le modèle](#modele)  
+5. [Installation & lancement](#installation)  
+6. [API & intégration](#api)  
+7. [Structure du dépôt](#structure)  
+8. [CI/CD & qualité](#qualite)
 
 ---
 
 ## <a id="a-propos"></a>À propos
 
 ### <a id="pitch"></a>Pitch & objectifs
-- Interface web permettant d’uploader une photo d’empreinte et d’obtenir une prédiction.
-- Back-end Flask intégrant le modèle Keras pré-entraîné (ResNet50 fine-tuné).
-- Persistance des observations (espèce, localisation, date, image) dans une base SQLite.
-- API REST exposant les routes principales : `predict`, `tracks`, `animals`.
-- Déploiement local simple via Docker Compose (2 services : front et api).
+- Interface web : prendre ou choisir une photo d'empreinte, obtenir une espèce et sa fiche.
+- Back-end Flask : charge `api/model.keras` (ResNet50 ajusté, Keras) et classe l'image en 13 espèces.
+- Base SQLite `wildprint.db` : fiches espèces (table `animals`, issue de `infos_especes.csv`) et relevés (table `tracks` : lieu, date, espèce). L'image n'est pas enregistrée.
+- API REST : `/predict`, `/tracks`, `/animals`.
+- Docker Compose : deux services, `flask` et `front`.
 
 ### <a id="documentation"></a>Documentation projet
-- Documentation exhaustive (contexte, parcours utilisateur, choix techniques) :  
+- Contexte, parcours utilisateur, choix techniques :  
   [Notion – WildAIprint Documentation Projet](https://www.notion.so/WildAIprint-Documentation-Projet-261b73b4f1d480ed8a6ef05ea84e85f3?source=copy_link)
-- Complément côté IA : voir le dépôt [WildAIprint – Modèle IA](https://github.com/Rateur/WildAIprint-Modele-CNN).
+- Entraînement et évaluation : dépôt [WildAIprint – Modèle IA](https://github.com/Rateur/WildAIprint-Modele-CNN).
 
 <p align="right"><a href="#top">Retour en haut</a></p>
 
@@ -70,7 +73,7 @@
     </td>
     <td align="center" width="120">
       <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="Python" height="48"><br>
-      <sub><strong>Python 3.10+</strong></sub>
+      <sub><strong>Python 3.11</strong></sub>
     </td>
   </tr>
   <tr>
@@ -93,8 +96,11 @@
   </tr>
 </table>
 
-- **Inference IA** : chargement du modèle `model.keras` (TensorFlow/Keras), mapping `class_names.json`.
-- **Suivi** : scripts de tests (`test_api.py`) + pipeline `.gitlab-ci.yml`.
+- **Inférence** : `model.keras` chargé par Keras 3.11.3 et TensorFlow ≥ 2.13. `class_names.json` donne les 13 noms d'espèces.
+- **API** : Flask 3.1.1, `flask-cors`, Pillow pour le redimensionnement.
+- **Front** : HTML, CSS et JavaScript sans framework, servis par Nginx dans Docker.
+- **Python** : 3.11 (image `python:3.11.9-slim` et CI sur `python:3.11`).
+- **Suivi** : `api/test_api.py` (pytest) et `.gitlab-ci.yml`.
 
 <p align="right"><a href="#top">Retour en haut</a></p>
 
@@ -102,41 +108,58 @@
 
 ## <a id="architecture"></a>Architecture & modules
 
-- **Front (HTML/CSS/JS)** : formulaire d’upload, aperçu de l’image, affichage des prédictions et informations espèces.
-- **API Flask** :
-  - route `/predict` : traitement de l’image, préprocess, inference, réponse JSON enrichie,
-  - routes `/tracks` (POST/GET) : sauvegarde et lecture des observations,
-  - route `/animals` : catalogue des espèces avec métadonnées (`infos_especes.csv`).
-- **Persistance** : base SQLite `wildprint.db` initialisée via `connection_db.py`.
-- **Containerisation** : services `frontend` et `api` orchestrés par `docker-compose.yml`.
-
 ```text
-utilisateur → front (formulaire, fetch) → API Flask → modèle Keras → réponse JSON → affichage + stockage
+utilisateur → front (fetch) → API Flask → modèle Keras → fiche espèce (SQLite) → affichage
+                                   ↑
+                    le front enregistre ensuite le relevé via POST /tracks
 ```
 
-<details><summary>Schéma répertoire</summary>
+- **Front** (`front/`) : une page, deux vues (`#accueil`, `#especes`).
+  - Photo par caméra ou par fichier, aperçu, bouton « Identifier l'empreinte ».
+  - Lieu : géolocalisation du navigateur, puis géocodage inverse par Nominatim (OpenStreetMap), avec un délai de 600 ms. Sinon `Unknown`.
+  - Fenêtre de consentement au stockage, mémorisée dans le `localStorage`.
+  - Grille des espèces avec recherche.
+- **API Flask** (`api/app.py`) :
+  - `/predict` : redimensionne l'image en 256 × 256, prédit, renvoie la fiche de l'espèce.
+  - `/tracks` (POST, GET) : écrit et lit les relevés.
+  - `/animals` : liste les fiches de `infos_especes.csv`.
+- **Persistance** : `wildprint.db`, créée par `connection_db.py` à partir de `infos_especes.csv`.
+- **Conteneurs** : `docker-compose.yml` lance `flask` (port 5000) et `front` (port 8080).
 
-```text
-/
-├── api/
-│   ├── app.py
-│   ├── connection_db.py
-│   ├── class_names.json
-│   ├── infos_especes.csv
-│   ├── model.keras
-│   ├── requirements.txt
-│   ├── test_api.py
-│   └── Dockerfile
-├── front/
-│   ├── index.html
-│   ├── script.js
-│   ├── style.css
-│   ├── assets/
-│   └── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
-</details>
+<p align="right"><a href="#top">Retour en haut</a></p>
+
+---
+
+## <a id="modele"></a>Le modèle
+
+Le modèle vient du dépôt [WildAIprint-Modele-CNN](https://github.com/Rateur/WildAIprint-Modele-CNN). Ce dépôt-ci ne l'entraîne pas.
+
+**Modèle retenu**
+- ResNet50 pré-entraîné sur ImageNet, sans sa tête. Tête ajoutée : GlobalAveragePooling2D, Dropout 0,5, Dense 128 (ReLU), Dropout 0,3, softmax sur 13 classes.
+- Notebook de Yasmine Sayad, choisi par l'équipe de quatre parce que c'était le plus performant.
+- Données : 250 photos d'origine, 13 espèces, 1 500 images après augmentation.
+- Entrée : 256 × 256. L'API redimensionne la photo et envoie les pixels bruts (0 à 255), sans `preprocess_input`, comme à l'entraînement.
+
+**Le vrai score**
+
+| | Score annoncé au départ | Évaluation refaite (octobre 2026) |
+|---|---|---|
+| Séparation | 80/20 sur les 1 500 images : des variantes d'une même photo des deux côtés | Par photo d'origine, avant l'augmentation : 70 % entraînement, 15 % validation, 15 % test |
+| Données de mesure | 300 images de validation | 38 photos de test jamais vues |
+| Exactitude | 83 % | **26 %** (intervalle à 95 % : 13 % à 39 %) |
+| F1 macro | 0,83 | 0,26 (0,11 à 0,33) |
+
+- Le 83 % était optimiste : le modèle avait déjà vu des variantes de ces photos.
+- Au hasard, sur 13 espèces : 8 %.
+- Exactitude d'entraînement vers 70 %, validation jamais au-dessus de 35 %.
+- Même modèle, même recette. Seule la séparation change. L'évaluation a été refaite par Valentin Périès (notebook `split_par_photo.ipynb` du dépôt du modèle).
+- Piste testée : ajouter `preprocess_input`. Résultat : 24 % (intervalle 11 % à 37 %), aucun gain mesurable.
+- Piste suivante : au moins une cinquantaine de photos par espèce, puis une validation croisée par groupes.
+
+**Ce que cela change pour cette application**
+- C'est une démo de la chaîne complète : photo, prédiction, fiche, relevé. Ce n'est pas un outil fiable sur le terrain.
+- L'API ne renvoie aucun score de confiance et n'applique aucun seuil. Toute image reçoit une des 13 espèces, même sans empreinte.
+- Le jeu de photos n'est pas distribué.
 
 <p align="right"><a href="#top">Retour en haut</a></p>
 
@@ -145,12 +168,13 @@ utilisateur → front (formulaire, fetch) → API Flask → modèle Keras → r�
 ## <a id="installation"></a>Installation & lancement
 
 ### 1. Pré-requis
-- Python **3.10+**
-- Docker (optionnel mais recommandé pour un lancement rapide)
-- Navigateur récent (Chrome/Firefox)
+- Docker avec Compose.
+- Git LFS : `api/model.keras` est suivi par LFS (`.gitattributes`). Sans LFS, vous récupérez un fichier pointeur et non le modèle.
+- Navigateur récent (Chrome ou Firefox).
 
 ### 2. Cloner le dépôt
 ```bash
+git lfs install
 git clone https://github.com/Rateur/wildaiprint-App.git
 cd wildaiprint-App
 ```
@@ -160,22 +184,17 @@ cd wildaiprint-App
 docker-compose build
 docker-compose up
 ```
-- Front disponible sur `http://localhost:8080`
-- API accessible sur `http://localhost:5000`
+- Front : `http://localhost:8080`
+- API : `http://localhost:5000`
+- Le front appelle `http://localhost:5000` (adresse écrite en dur dans `front/script.js`, sans variable `API_URL`). L'API n'accepte les appels que depuis `http://localhost:8080` (CORS).
+- Compose monte `./api` dans `/app/api`. C'est ce montage qui fournit `api/model.keras` à `app.py`.
 
-### 4. Lancement manuel (sans Docker)
-```bash
-# Back-end
-cd api
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python app.py
+### 4. Sans Docker
+Lancement manuel de l'API : À confirmer.
+- `python app.py` ne démarre rien : le fichier n'appelle pas `app.run`.
+- `app.py` charge `api/model.keras` depuis le dossier courant, puis lit `class_names.json` et `wildprint.db` sans préfixe. Aucun dossier courant ne satisfait les trois chemins du dépôt.
 
-# Front-end (depuis la racine ou front/)
-python -m http.server 8080
-```
-- Adapter le champ `API_URL` dans `front/script.js` si l’API tourne sur une autre adresse/port.
+Pour le front seul : `cd front && python -m http.server 8080`.
 
 <p align="right"><a href="#top">Retour en haut</a></p>
 
@@ -183,14 +202,20 @@ python -m http.server 8080
 
 ## <a id="api"></a>API & intégration
 
-| Méthode | Endpoint                        | Content-Type        | Corps / Description |
-|---------|---------------------------------|---------------------|---------------------|
-| `POST`  | `/predict`                      | `multipart/form-data` | Champ `image` (`JPEG/PNG`). Retourne l’espèce prédite + métadonnées. |
-| `POST`  | `/tracks`                       | `application/json`    | `{ "species": "...", "location": "...", "date": "...", "picture": "..." }` |
-| `GET`   | `/tracks`                       | `application/json`    | Liste paginable des observations stockées dans SQLite. |
-| `GET`   | `/animals`                      | `application/json`    | Catalogue des espèces connues (nom, famille, habitat, anecdote). |
+| Méthode | Endpoint | Corps | Réponse |
+|---------|----------|-------|---------|
+| `GET` | `/` | | Texte `API Flask ✅` |
+| `POST` | `/predict` | `multipart/form-data`, champ `image` (`jpg`, `jpeg`, `png`) | `200` : `{"animal": {...}}`. `400` sans image. `404` si l'espèce n'est pas en base. |
+| `POST` | `/tracks` | JSON `{"loc": "...", "date": "...", "species": "..."}`, trois champs obligatoires | `201` `track added successfully`. `400` `missing data ...` si un champ manque. |
+| `GET` | `/tracks` | | Tous les relevés : `id`, `path`, `loc`, `date`, `animal_sp`. Pas de pagination. |
+| `GET` | `/animals` | | Toutes les fiches espèces. |
 
-<details><summary>Exemple de réponse <code>/predict</code></summary>
+- `path` vaut toujours `track.jpg` : l'image n'est pas enregistrée.
+- Une extension non autorisée n'a pas de réponse dédiée : la route ne retourne rien, Flask renvoie une erreur `500`.
+
+<details><summary>Exemple de format de réponse <code>/predict</code></summary>
+
+Les champs sont les colonnes de `infos_especes.csv`. Les valeurs viennent de la ligne `Chat`, le texte de `description` est abrégé. La réponse ne contient ni confiance ni identifiant de classe.
 
 ```json
 {
@@ -201,11 +226,10 @@ python -m http.server 8080
     "region": "Amérique, Europe, Asie occidentale et Afrique",
     "size": "46 à 51 cm sans la queue",
     "picture": "chat.jpg",
-    "description": "Le Chat (Felis silvestris) est une espèce de félins présent dans divers types d'habitats.",
+    "housing": null,
+    "description": "Le Chat sauvage4 (Felis silvestris) est une espèce de félins…",
     "funfact": "Un chat ne peut pas voir directement sous son nez !"
-  },
-  "confidence": 0.87,
-  "class_id": 2
+  }
 }
 ```
 </details>
@@ -218,22 +242,52 @@ python -m http.server 8080
 
 ```text
 /
-├── api/                  # API Flask + modèle IA + tests
-├── front/                # Interface web statique
-├── docker-compose.yml    # Orchestration front/api
-└── README.md             # Ce guide
+├── api/
+│   ├── app.py                # API Flask
+│   ├── connection_db.py      # recrée wildprint.db (demande pandas, absent de requirements.txt)
+│   ├── class_names.json      # 13 espèces
+│   ├── infos_especes.csv     # fiches espèces
+│   ├── model.keras           # Git LFS
+│   ├── wildprint.db          # SQLite
+│   ├── requirements.txt
+│   ├── test_api.py
+│   └── Dockerfile
+├── front/
+│   ├── index.html
+│   ├── script.js
+│   ├── style.css
+│   ├── assets/               # logo, caméra, fond, animals/ (13 photos)
+│   └── Dockerfile            # Nginx
+├── docker-compose.yml
+├── .gitattributes            # api/model.keras en LFS
+├── .gitlab-ci.yml
+└── README.md
 ```
 
-- Les artefacts lourds (`model.keras`, `class_names.json`, `mlruns/`) sont ignorés via `.gitignore`.
-- Les notebooks et scripts d’entraînement sont disponibles dans le dépôt IA compagnon.
+- `class_names.json` et `wildprint.db` figurent dans le `.gitignore` mais sont versionnés dans le dépôt.
+- Notebooks, entraînement et évaluation : dépôt du modèle.
 
 <p align="right"><a href="#top">Retour en haut</a></p>
 
 ---
 
 ## <a id="qualite"></a>CI/CD & qualité
-- `.gitlab-ci.yml` : pipeline de build/test (Docker) utilisé sur l’infrastructure GitLab d’origine.
-- `api/test_api.py` : test d’intégration simulant un appel complet à l’API `/predict`.
-- Recommandé : lancer des tests après toute modification backend (`pytest api/test_api.py`).
+
+**`.gitlab-ci.yml`** (branche `main` seulement)
+- `test` : installe Keras 3.11.3 et TensorFlow, puis lance `python3 -m api.test_api`.
+- `build` et `push` : construisent les images `api` et `front`, les poussent dans le registre GitLab avec le SHA court du commit, puis en `latest`.
+
+**Tests**
+- `api/test_api.py` contient 5 tests pytest : `/predict`, `/tracks` (3), `/animals`.
+- Le job CI lance le module avec `python -m`, sans appeler pytest. Il vérifie que `api.app` s'importe et que le modèle se charge. Il n'exécute aucun test.
+- L'API lit la vraie `wildprint.db` du dossier courant. La base en mémoire du fixture n'est pas utilisée par `app.py`.
+- Plusieurs assertions ne correspondent pas aux réponses de `app.py` (par exemple `"species" in data` sur `{"animal": ...}`). À confirmer avec `python -m pytest api/test_api.py`, lancé depuis la racine.
+
+**Limites connues**
+- `front/script.js` lit `result.animals`. L'API renvoie `animal`. À confirmer en lançant l'application.
+- La fenêtre de consentement annonce le stockage de l'image. Le code n'enregistre pas l'image.
+- L'image construite avec `api/Dockerfile` seule ne contient pas `/app/api/`. Elle dépend du montage de Compose. À confirmer en la lançant seule.
+- `app.secret_key` est écrite en dur dans `api/app.py`. À retirer.
+- Aucun temps de réponse n'a été mesuré.
 
 <p align="right"><a href="#top">Retour en haut</a></p>
