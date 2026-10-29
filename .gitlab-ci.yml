@@ -19,15 +19,11 @@ test_api:
   stage: test
   image: python:3.11
   before_script:
-  - apt update && apt install -y git git-lfs python3-pip
-  - git lfs install
-  - git lfs pull
-  - pip uninstall -y keras tensorflow || true
-  - pip install keras==3.11.3 tensorflow>=2.13
-  - python -c "import keras, tensorflow; print('Keras:', keras.__version__, 'TF:', tensorflow.__version__)"
-  - pip install -r api/requirements.txt
+    - apt-get update && apt-get install -y git-lfs
+    - git lfs install && git lfs pull   # the real model, for test_predict_real_model
+    - pip install -r api/requirements.txt
   script:
-    - python3 -m api.test_api
+    - python -m pytest api/test_api.py -v
   only:
     - main
 
