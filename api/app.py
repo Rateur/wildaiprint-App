@@ -1,5 +1,4 @@
 from flask import Flask, jsonify, request
-from tensorflow.keras.models import load_model
 import numpy as np
 import sqlite3
 import json
@@ -8,7 +7,8 @@ from PIL import Image
 import os
 
 app = Flask(__name__)
-app.secret_key = "iqusgdoiqzgdpaohbpng$p^zoepobng,^pozpebngnôpzen,gn^bopzne,p"
+HERE = os.path.dirname(os.path.abspath(__file__))   # model, classes and database sit next to this file, whatever the working directory
+app.config['DATABASE'] = os.path.join(HERE, 'wildprint.db')
 CORS(app, resources={
     r"/*": {"origins": "http://localhost:8080"}
 })
@@ -18,7 +18,7 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 
 # db connection
 def get_db_connection():
-    conn = sqlite3.connect('wildprint.db')  
+    conn = sqlite3.connect(app.config['DATABASE'])
     conn.row_factory = sqlite3.Row         
     return conn
 
@@ -29,12 +29,18 @@ def home():
 
 # ---------------predictions------------------------
 
-# load CNN
-model = load_model("api/model.keras")  
+# load CNN on the first prediction: the other routes, and their tests, run without TensorFlow
+model = None
+def get_model():
+    global model
+    if model is None:
+        from tensorflow.keras.models import load_model
+        model = load_model(os.path.join(HERE, "model.keras"))
+    return model
 
 # load class names
 try:
-    with open("class_names.json", "r") as f:
+    with open(os.path.join(HERE, "class_names.json"), "r") as f:
         class_names = json.load(f)
 except Exception as e:
     class_names = []
@@ -59,7 +65,7 @@ def predict():
         img = img.resize((256, 256))
         image_array = np.array(img)
         image_array = np.expand_dims(image_array, axis=0)
-        prediction = model.predict(image_array)
+        prediction = get_model().predict(image_array)
         predicted_index = int(np.argmax(prediction[0]))
         predicted_label = class_names[predicted_index]
 

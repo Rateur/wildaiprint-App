@@ -8,6 +8,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Simplon%20x%20Microsoft-D%C3%A9veloppeur%20IA-ee2e5d?style=for-the-badge" alt="Simplon x Microsoft – Développeur IA">
   <img src="https://img.shields.io/github/stars/Rateur/wildaiprint-App.svg?style=for-the-badge&color=ffd700" alt="Étoiles GitHub">
+  <img src="https://img.shields.io/github/actions/workflow/status/Rateur/wildaiprint-App/tests.yml?branch=main&style=for-the-badge&label=tests" alt="Tests">
 </p>
 
 <p align="center">
@@ -96,11 +97,11 @@
   </tr>
 </table>
 
-- **Inférence** : `model.keras` chargé par Keras 3.11.3 et TensorFlow ≥ 2.13. `class_names.json` donne les 13 noms d'espèces.
+- **Inférence** : `model.keras` chargé par Keras 3.11.3 et TensorFlow 2.20, à la première prédiction. `class_names.json` donne les 13 noms d'espèces.
 - **API** : Flask 3.1.1, `flask-cors`, Pillow pour le redimensionnement.
 - **Front** : HTML, CSS et JavaScript sans framework, servis par Nginx dans Docker.
 - **Python** : 3.11 (image `python:3.11.9-slim` et CI sur `python:3.11`).
-- **Suivi** : `api/test_api.py` (pytest) et `.gitlab-ci.yml`.
+- **Suivi** : `api/test_api.py` (pytest), `.gitlab-ci.yml` et GitHub Actions (`.github/workflows/tests.yml`).
 
 <p align="right"><a href="#top">Retour en haut</a></p>
 
@@ -187,12 +188,15 @@ docker-compose up
 - Front : `http://localhost:8080`
 - API : `http://localhost:5000`
 - Le front appelle `http://localhost:5000` (adresse écrite en dur dans `front/script.js`, sans variable `API_URL`). L'API n'accepte les appels que depuis `http://localhost:8080` (CORS).
-- Compose monte `./api` dans `/app/api`. C'est ce montage qui fournit `api/model.keras` à `app.py`.
+- `app.py` lit `model.keras`, `class_names.json` et `wildprint.db` dans son propre dossier, quel que soit le dossier courant.
 
 ### 4. Sans Docker
-Lancement manuel de l'API : À confirmer.
-- `python app.py` ne démarre rien : le fichier n'appelle pas `app.run`.
-- `app.py` charge `api/model.keras` depuis le dossier courant, puis lit `class_names.json` et `wildprint.db` sans préfixe. Aucun dossier courant ne satisfait les trois chemins du dépôt.
+Depuis la racine :
+```bash
+pip install -r api/requirements.txt
+flask --app api/app.py run
+```
+Le modèle se charge à la première prédiction : quelques secondes.
 
 Pour le front seul : `cd front && python -m http.server 8080`.
 
@@ -274,19 +278,22 @@ Les champs sont les colonnes de `infos_especes.csv`. Les valeurs viennent de la 
 ## <a id="qualite"></a>CI/CD & qualité
 
 **`.gitlab-ci.yml`** (branche `main` seulement)
-- `test` : installe Keras 3.11.3 et TensorFlow, puis lance `python3 -m api.test_api`.
+- `test` : installe `api/requirements.txt`, récupère le modèle par Git LFS, lance `python -m pytest api/test_api.py`.
 - `build` et `push` : construisent les images `api` et `front`, les poussent dans le registre GitLab avec le SHA court du commit, puis en `latest`.
 
-**Tests**
-- `api/test_api.py` contient 5 tests pytest : `/predict`, `/tracks` (3), `/animals`.
-- Le job CI lance le module avec `python -m`, sans appeler pytest. Il vérifie que `api.app` s'importe et que le modèle se charge. Il n'exécute aucun test.
-- L'API lit la vraie `wildprint.db` du dossier courant. La base en mémoire du fixture n'est pas utilisée par `app.py`.
-- Plusieurs assertions ne correspondent pas aux réponses de `app.py` (par exemple `"species" in data` sur `{"animal": ...}`). À confirmer avec `python -m pytest api/test_api.py`, lancé depuis la racine.
+**GitHub Actions** (`.github/workflows/tests.yml`, à chaque push sur `main` et chaque pull request)
+- Les mêmes tests, sur Python 3.11. Le modèle reste un pointeur Git LFS : le test du vrai modèle est sauté.
+
+**Tests** (`api/test_api.py`, 7 tests)
+- `/predict` : avec un faux modèle (entrée 256 × 256 × 3, fiche de l'espèce prédite), sans image (400), et avec le vrai modèle quand Git LFS l'a récupéré.
+- `/tracks` : ajout d'un relevé, donnée manquante (400), liste vide au départ.
+- `/animals` : une fiche pour chacune des 13 classes du modèle.
+- Chaque test travaille sur une copie de `wildprint.db` : la vraie base n'est jamais modifiée.
+- Lancement : `python -m pytest api/test_api.py`, depuis la racine. Les 7 passent, vrai modèle compris (octobre 2026).
 
 **Limites connues**
 - La fenêtre de consentement annonce le stockage de l'image. Le code n'enregistre pas l'image.
-- L'image construite avec `api/Dockerfile` seule ne contient pas `/app/api/`. Elle dépend du montage de Compose. À confirmer en la lançant seule.
-- `app.secret_key` est écrite en dur dans `api/app.py`. À retirer.
+- Les images Docker n'ont pas été reconstruites depuis la correction des chemins (octobre 2026).
 - Aucun temps de réponse n'a été mesuré.
 
 <p align="right"><a href="#top">Retour en haut</a></p>
