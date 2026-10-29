@@ -152,7 +152,7 @@ Le modèle vient du dépôt [WildAIprint-Modele-CNN](https://github.com/Rateur/W
 - Le 83 % était optimiste : le modèle avait déjà vu des variantes de ces photos.
 - Au hasard, sur 13 espèces : 8 %.
 - Exactitude d'entraînement vers 70 %, validation jamais au-dessus de 35 %.
-- Même modèle, même recette. Seule la séparation change. L'évaluation a été refaite par Valentin Périès (notebook `split_par_photo.ipynb` du dépôt du modèle).
+- Même architecture, même recette, modèle réentraîné. Seule la séparation change. L'évaluation a été refaite par Valentin Périès (notebook `split_par_photo.ipynb` du dépôt du modèle).
 - Piste testée : ajouter `preprocess_input`. Résultat : 24 % (intervalle 11 % à 37 %), aucun gain mesurable.
 - Piste suivante : au moins une cinquantaine de photos par espèce, puis une validation croisée par groupes.
 
@@ -284,7 +284,6 @@ Les champs sont les colonnes de `infos_especes.csv`. Les valeurs viennent de la 
 - Plusieurs assertions ne correspondent pas aux réponses de `app.py` (par exemple `"species" in data` sur `{"animal": ...}`). À confirmer avec `python -m pytest api/test_api.py`, lancé depuis la racine.
 
 **Limites connues**
-- `front/script.js` lit `result.animals`. L'API renvoie `animal`. À confirmer en lançant l'application.
 - La fenêtre de consentement annonce le stockage de l'image. Le code n'enregistre pas l'image.
 - L'image construite avec `api/Dockerfile` seule ne contient pas `/app/api/`. Elle dépend du montage de Compose. À confirmer en la lançant seule.
 - `app.secret_key` est écrite en dur dans `api/app.py`. À retirer.
