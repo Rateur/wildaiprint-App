@@ -292,7 +292,6 @@ Les champs sont les colonnes de `infos_especes.csv`. Les valeurs viennent de la 
 - Lancement : `python -m pytest api/test_api.py`, depuis la racine. Les 7 passent, vrai modèle compris (octobre 2026).
 
 **Limites connues**
-- La fenêtre de consentement annonce le stockage de l'image. Le code n'enregistre pas l'image.
 - Les images Docker n'ont pas été reconstruites depuis la correction des chemins (octobre 2026).
 - Aucun temps de réponse n'a été mesuré.
 
