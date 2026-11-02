@@ -155,7 +155,7 @@ Le modèle vient du dépôt [WildAIprint-Modele-CNN](https://github.com/Rateur/W
 - Exactitude d'entraînement vers 70 %, validation jamais au-dessus de 35 %.
 - Même architecture, même recette, modèle réentraîné. Seule la séparation change. L'évaluation a été refaite par Valentin Périès (notebook `split_par_photo.ipynb` du dépôt du modèle).
 - Piste testée : ajouter `preprocess_input`. Résultat : 24 % (intervalle 11 % à 37 %), aucun gain mesurable.
-- Piste suivante : au moins une cinquantaine de photos par espèce, puis une validation croisée par groupes.
+- Piste testée : 55 photos par espèce (715 au lieu de 250, photos iNaturalist ajoutées). Résultat : toujours 26 % (18 % à 35 %, sur 104 photos de test). Le nombre de photos n'était pas le seul frein ; pistes suivantes : recadrer l'empreinte avant de la classer, un fine-tuning plus large.
 
 **Ce que cela change pour cette application**
 - C'est une démo de la chaîne complète : photo, prédiction, fiche, relevé. Ce n'est pas un outil fiable sur le terrain.
